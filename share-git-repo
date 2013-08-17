@@ -1,1 +1,49 @@
-/home/gaston/utils/git/share-repo.sh
+#!/bin/sh
+
+if [ $# -ne 1 ]; then
+    echo "Usage: `basename $0` <folder-with-.git-inside>"
+    exit 65; # BADARGS
+fi
+
+PARENT="`dirname $1`"
+REPO="`basename $1`"
+GIT_DIR="$PARENT/$REPO/.git"
+
+if [ ! -d "$GIT_DIR" ]; then
+    # check if the repo is bare
+    echo "$REPO" | grep "\w\.git\$" > /dev/null 
+    if [ $? -eq 0 ]; then
+        GIT_DIR="$PARENT/$REPO"
+        # if it's bare, then enable push
+        OPTS="--enable=receive-pack"
+    else 
+        echo ".git not found in $GIT_DIR"
+        exit 65;
+    fi
+fi
+
+DO_EXPORT="touch $GIT_DIR/git-daemon-export-ok"
+CLEAN_EXPORT="rm $GIT_DIR/git-daemon-export-ok"
+START_DAEMON="git daemon --reuseaddr --base-path=$PARENT $OPTS $PARENT"
+
+echo "[debug] $DO_EXPORT"
+exec `$DO_EXPORT`
+if [ "$?" -ne 0 ]; then echo "\tCommand failed"; exit 1; fi
+
+echo "[debug] $START_DAEMON"
+echo "Try to clone your repo:"
+#echo "git clone git://localhost/$REPO"
+ifconfig | sed 's/:/ /g' | grep -B1 "inet" | awk '{ if ( $1 == "inet" ) { print $3 } else if ( $2 == "inet" ) { print $3 } }' | xargs printf "git clone git://%s/$REPO \n" 
+echo "Note: to share through the internet you should be able to access port 9418"
+exec `$START_DAEMON` &
+if [ "$?" -ne 0 ]; then echo "\tCommand failed"; exit 1; fi
+
+# wait until ENTER is pressed
+read -p "Press ENTER to exit" var # var is the variable where read stores the user input
+
+# kill the process
+kill -9 `ps aux | grep git-daemon | grep -v grep | awk '{ print $2 }'`
+
+# remove the export file
+echo "[debug] $CLEAN_EXPORT"
+exec `$CLEAN_EXPORT`
