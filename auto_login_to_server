@@ -1,0 +1,13 @@
+#!/bin/sh
+if [ $# -ne 1 ]; then
+    echo "The scripts requires one argument. Example usage:"
+    echo "./auto_login_to_server gaston@192.168.0.1"
+    exit 1
+fi;
+SERVER=$1
+if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
+    echo "id_rsa.pub not configured"
+    exit 1
+fi
+echo Configuring access to server: $SERVER
+cat $HOME/.ssh/id_rsa.pub | ssh $SERVER 'cat >> $HOME/.ssh/authorized_keys'
