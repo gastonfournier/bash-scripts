@@ -1,1 +1,8 @@
-/home/gaston/utils/json/format-json-file.sh
+#!/bin/sh
+if [ $# -ne 1 ]; then
+	echo "Usage: `basename $0` <filename>"
+	exit 1;
+fi
+TMP=.$1.json-formmated
+cat $1 | python -mjson.tool > $TMP
+mv $TMP $1
