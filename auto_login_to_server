@@ -6,7 +6,8 @@ if [ $# -ne 1 ]; then
 fi;
 SERVER=$1
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
-    echo "id_rsa.pub not configured"
+    echo "ERRROR: id_rsa.pub not configured"
+    echo "Execute ssh-keygen and save it to the default location ($HOME/.ssh/authorized_keys)"
     exit 1
 fi
 echo Configuring access to server: $SERVER
